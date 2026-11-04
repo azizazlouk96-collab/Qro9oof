@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>استوديو الفيديو</title>
+<style>
+:root{--bg:#f4f0e8;--ink:#1c2230;--card:#fff;--line:#d9d2c2;--acc:#e0452b;--acc-ink:#fff;--mut:#6a6558;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#12141a;--ink:#ece7da;--card:#1c1f29;--line:#2d3243;--acc:#f0664d;--acc-ink:#1a0c08;--mut:#a39d8e}}
+:root[data-theme="light"]{--bg:#f4f0e8;--ink:#1c2230;--card:#fff;--line:#d9d2c2;--acc:#e0452b;--acc-ink:#fff;--mut:#6a6558}
+:root[data-theme="dark"]{--bg:#12141a;--ink:#ece7da;--card:#1c1f29;--line:#2d3243;--acc:#f0664d;--acc-ink:#1a0c08;--mut:#a39d8e}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,"Segoe UI",sans-serif;line-height:1.7;padding:16px 14px 60px}
+main{max-width:640px;margin:0 auto}
+h1{font-size:26px;margin:0 0 12px}
+canvas{display:block;width:100%;max-height:50vh;object-fit:contain;background:#000;border-radius:12px}
+.bar{display:flex;gap:8px;align-items:center;margin:10px 0;flex-wrap:wrap}
+button,.btn{font:inherit;font-size:16px;font-weight:700;border-radius:10px;border:2px solid var(--acc);background:transparent;color:var(--acc);padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+.p{background:var(--acc);color:var(--acc-ink)}
+.pick{position:relative;overflow:hidden;display:inline-block;font-weight:700;font-size:16px;border:2px solid var(--acc);color:var(--acc);border-radius:10px;padding:8px 14px;cursor:pointer}
+.pick.p{color:var(--acc-ink)}
+.pick input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--acc)}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--acc)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+label.l{display:block;font-size:14px;color:var(--mut);margin-bottom:3px}
+select,input[type=text],input[type=number]{width:100%;font:inherit;font-size:16px;padding:8px;border:2px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.chk{display:flex;gap:8px;align-items:center;font-size:16px}
+.chk input{width:20px;height:20px;accent-color:var(--acc)}
+.clip{display:flex;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;align-items:center}
+.th{width:56px;height:80px;object-fit:cover;border-radius:6px;background:#000;flex:none}
+.f{flex:1;display:grid;gap:6px;min-width:0}
+.r{display:flex;gap:6px;align-items:center}
+.r input[type=number]{width:70px}
+.mini{padding:2px 10px;font-size:15px}
+#res{display:none;margin-top:16px}
+#res video{width:100%;max-height:50vh;border-radius:10px;background:#000}
+.note{color:var(--mut);font-size:14px}
+#msg{color:var(--acc);min-height:1.5em;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>استوديو الفيديو 🎬</h1>
+<canvas id="cv"></canvas>
+<div class="bar"><button class="p" id="pl">▶ تشغيل</button><input type="range" id="sk" min="0" max="0" value="0" aria-label="الموضع"><span id="tm" class="note">0:00</span></div>
+
+<div class="bar">
+<span class="pick p">＋ أضف صورًا وفيديوهات<input type="file" id="fi" accept="image/*,video/*" multiple></span>
+<span class="pick">🎵 أضف موسيقى<input type="file" id="mf" accept="audio/*"></span>
+<span id="mn" class="note"></span>
+</div>
+
+
+<div class="grid">
+<div><label class="l" for="rt">المقاس</label><select id="rt"><option value="9:16">عمودي 9:16 (تيك توك)</option><option value="16:9">أفقي 16:9</option><option value="1:1">مربع 1:1</option></select></div>
+<div><label class="l" for="tr">الانتقال</label><select id="tr"><option value="fade">تلاشي</option><option value="slide">انزلاق جانبي</option><option value="up">انزلاق للأعلى</option><option value="zoom">تكبير</option><option value="spin">دوران</option><option value="wipe">مسح</option><option value="none">بدون</option></select></div>
+<div><label class="l" for="td">مدة الانتقال (ثانية)</label><input type="number" id="td" value="0.6" min="0.2" max="2" step="0.1"></div>
+<div><label class="l" for="fl">الفلتر</label><select id="fl"><option value="none">بدون</option><option value="grayscale(1)">أبيض وأسود</option><option value="sepia(.7) saturate(1.3)">دافئ</option><option value="hue-rotate(160deg) saturate(1.2)">بارد</option><option value="contrast(1.3) saturate(1.5)">حيوي</option></select></div>
+<div><label class="l" for="tp">مكان النص</label><select id="tp"><option value="b">أسفل</option><option value="m">وسط</option><option value="t">أعلى</option></select></div>
+<div><label class="l" for="tc">لون النص</label><select id="tc"><option value="#ffffff">أبيض</option><option value="#ffe14d">أصفر</option><option value="#ff6b8a">وردي</option><option value="#7bed9f">أخضر</option></select></div>
+</div>
+<label class="chk"><input type="checkbox" id="kb" checked> حركة بطيئة على الصور (تقريب خفيف)</label>
+
+<div id="list" style="margin-top:14px"></div>
+<div id="msg"></div>
+<button class="p" id="ex" style="width:100%;font-size:18px;padding:12px">⬇ صدّر الفيديو</button>
+
+<div id="res"><video id="rv" controls playsinline></video><div class="bar"><a id="dl" class="btn p" download="video.webm">حفظ الفيديو</a></div>
+<p class="note">إن لم يبدأ التنزيل من هذه الصفحة، فاضغط مطولًا على الفيديو واختر حفظ.</p></div>
+<p class="note">يحاول التصدير بصيغة MP4 أولًا، وإن لم يدعمها متصفحك فبصيغة WebM. استخدم مقاطع وصورًا لك أو يحق لك استخدامها.</p>
+</main>
+<audio id="au" preload="auto"></audio>
+<script>
+const $=id=>document.getElementById(id);
+const cv=$('cv'),cx=cv.getContext('2d'),au=$('au');
+let W=540,H=960,clips=[],playing=false,t=0,t0=0,exporting=false,rec=null,chunks=[],ac=null,dst=null,hasMusic=false,ext='webm';
+const RT={'9:16':[540,960],'16:9':[960,540],'1:1':[720,720]};
+function setRatio(){[W,H]=RT[$('rt').value];cv.width=W;cv.height=H;frame()}
+function trD(){if($('tr').value==='none'||clips.length<2)return 0;const m=Math.min(...clips.map(c=>c.dur));return Math.min(parseFloat($('td').value)||.6,m*.8)}
+function layout(){const tr=trD();let s=0;const st=clips.map(c=>{const a=s;s+=c.dur-tr;return a});return{st,tr,total:clips.length?st[clips.length-1]+clips[clips.length-1].dur:0}}
+function cover(el,flt){
+  const iw=el.videoWidth||el.naturalWidth,ih=el.videoHeight||el.naturalHeight;if(!iw)return;
+  const s=Math.max(W/iw,H/ih);cx.filter=flt;cx.drawImage(el,(W-iw*s)/2,(H-ih*s)/2,iw*s,ih*s);cx.filter='none';
+}
+function put(c,a,dx,sc,dy,rot){
+  cx.save();cx.globalAlpha=Math.max(0,Math.min(1,a));cx.translate(W/2+dx,H/2+(dy||0));if(rot)cx.rotate(rot);cx.scale(sc,sc);cx.translate(-W/2,-H/2);cover(c.el,$('fl').value);cx.restore();
+}
+function cap(c,a){
+  if(!c.text||a<=0)return;
+  cx.save();cx.globalAlpha=Math.min(1,a);cx.textAlign='center';cx.textBaseline='middle';
+  const fs=Math.round(Math.min(W,H)*.085);cx.font='bold '+fs+'px Tahoma,sans-serif';cx.lineWidth=fs*.18;cx.strokeStyle='#000';cx.fillStyle=$('tc').value;cx.lineJoin='round';
+  const words=c.text.split(' '),lines=[];let cur='';
+  words.forEach(w=>{const n=cur?cur+' '+w:w;if(cx.measureText(n).width>W*.86&&cur){lines.push(cur);cur=w}else cur=n});lines.push(cur);
+  const base=H*({t:.16,m:.5,b:.8}[$('tp').value]);
+  lines.forEach((l,i)=>{const y=base+(i-(lines.length-1)/2)*fs*1.25;cx.strokeText(l,W/2,y);cx.fillText(l,W/2,y)});
+  cx.restore();
+}
+function frame(){
+  cx.fillStyle='#000';cx.fillRect(0,0,W,H);
+  if(!clips.length){cx.fillStyle='#999';cx.font='bold '+Math.round(Math.min(W,H)*.05)+'px Tahoma';cx.textAlign='center';cx.fillText('أضف صورًا أو فيديوهات',W/2,H/2);return}
+  const {st,tr,total}=layout();const tt=Math.min(t,total-.001);const type=$('tr').value;
+  const act=[];
+  clips.forEach((c,i)=>{
+    const on=tt>=st[i]&&tt<st[i]+c.dur;if(on)act.push(i);
+    if(c.kind==='v'){
+      if(on&&playing&&c.el.paused){c.el.currentTime=Math.min(tt-st[i],Math.max(0,c.el.duration-.05));c.el.play().catch(()=>{})}
+      else if(on&&!playing){const d=tt-st[i];if(Math.abs(c.el.currentTime-d)>.2)c.el.currentTime=Math.min(d,Math.max(0,c.el.duration-.05))}
+      else if(!on&&!c.el.paused)c.el.pause();
+    }});
+  if(act.length===2&&tr>0){
+    const A=clips[act[0]],B=clips[act[1]],p=(tt-st[act[1]])/tr;
+    if(type==='fade'){put(A,1,0,1);put(B,p,0,1)}
+    else if(type==='slide'){put(A,1,-p*W,1);put(B,1,(1-p)*W,1)}
+    else if(type==='up'){put(A,1,0,1,-p*H);put(B,1,0,1,(1-p)*H)}
+    else if(type==='zoom'){put(A,1-p,0,1+p*.5);put(B,p,0,1.3-p*.3)}
+    else if(type==='spin'){put(A,1-p,0,1+p*.3,0,p*.6);put(B,p,0,1.3-p*.3,0,-(1-p)*.6)}
+    else if(type==='wipe'){put(A,1,0,1);cx.save();cx.beginPath();cx.rect(W*(1-p),0,W*p,H);cx.clip();put(B,1,0,1);cx.restore()}
+    cap(A,1-p);cap(B,p);
+  }else if(act.length){
+    const c=clips[act[0]],lt=tt-st[act[0]];
+    put(c,1,0,($('kb').checked&&c.kind==='i')?1+.07*lt/c.dur:1);cap(c,Math.min(1,lt*3));
+  }
+}
+function fmt(s){s=Math.max(0,s);return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')}
+function sync(){const {total}=layout();$('sk').max=Math.round(total*100);$('sk').value=Math.round(Math.min(t,total)*100);$('tm').textContent=fmt(t)+' / '+fmt(total)}
+function stopMedia(){clips.forEach(c=>c.kind==='v'&&c.el.pause());au.pause()}
+function loop(now){
+  if(!playing)return;
+  const {total}=layout();t=(now-t0)/1000;
+  if(t>=total){t=total;playing=false;stopMedia();$('pl').textContent='▶ تشغيل';sync();frame();if(exporting)finish();return}
+  frame();sync();requestAnimationFrame(loop);
+}
+function play(){
+  if(!clips.length)return;const {total}=layout();if(t>=total)t=0;
+  playing=true;t0=performance.now()-t*1000;$('pl').textContent='⏸ إيقاف';
+  if(hasMusic){try{au.currentTime=t%(au.duration||1e9);au.play().catch(()=>{})}catch(e){}}
+  requestAnimationFrame(loop);
+}
+function pause(){playing=false;stopMedia();$('pl').textContent='▶ تشغيل'}
+$('pl').onclick=()=>playing?pause():play();
+$('sk').oninput=e=>{pause();t=e.target.value/100;frame();sync()};
+function add(f){
+  const url=URL.createObjectURL(f);
+  if(f.type.startsWith('video')){
+    const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';v.src=url;
+    v.onloadedmetadata=()=>{clips.push({kind:'v',el:v,url,dur:Math.max(1,Math.min(6,Math.round(v.duration*2)/2)),text:''});v.currentTime=.01;refresh()};
+  }else{
+    const im=new Image();im.onload=()=>{clips.push({kind:'i',el:im,url,dur:3,text:''});refresh()};im.src=url;
+  }
+}
+$('fi').onchange=e=>{[...e.target.files].forEach(add);e.target.value=''};
+$('mf').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  au.src=URL.createObjectURL(f);au.load();hasMusic=true;$('mn').textContent='🎵 '+f.name.slice(0,24);
+  try{if(!ac){ac=new(window.AudioContext||window.webkitAudioContext)();const s=ac.createMediaElementSource(au);dst=ac.createMediaStreamDestination();s.connect(dst);s.connect(ac.destination)}}catch(err){}
+  e.target.value='';
+};
+function refresh(){
+  const L=$('list');L.innerHTML='';
+  clips.forEach((c,i)=>{
+    const d=document.createElement('div');d.className='clip';
+    const th=document.createElement(c.kind==='v'?'video':'img');th.className='th';th.src=c.url;if(c.kind==='v'){th.muted=true;th.preload='metadata'}
+    const f=document.createElement('div');f.className='f';
+    const tx=document.createElement('input');tx.type='text';tx.placeholder='نص على المشهد (اختياري)';tx.value=c.text;tx.oninput=()=>{c.text=tx.value;frame()};
+    const r=document.createElement('div');r.className='r';
+    const du=document.createElement('input');du.type='number';du.min=1;du.max=15;du.step=.5;du.value=c.dur;du.onchange=()=>{c.dur=Math.max(1,parseFloat(du.value)||3);refresh()};
+    const mk=(txt,fn,ti)=>{const b=document.createElement('button');b.className='mini';b.textContent=txt;b.setAttribute('aria-label',ti);b.onclick=fn;return b};
+    r.append(du,document.createTextNode('ث'),
+      mk('↑',()=>{if(i>0){[clips[i-1],clips[i]]=[clips[i],clips[i-1]];refresh()}},'أعلى'),
+      mk('↓',()=>{if(i<clips.length-1){[clips[i+1],clips[i]]=[clips[i],clips[i+1]];refresh()}},'أسفل'),
+      mk('✕',()=>{clips.splice(i,1);refresh()},'حذف'));
+    f.append(tx,r);d.append(th,f);L.append(d);
+  });
+  t=Math.min(t,layout().total);sync();frame();
+}
+function finish(){exporting=false;rec&&rec.stop()}
+$('ex').onclick=()=>{
+  if(!clips.length){$('msg').textContent='أضف مشهدًا واحدًا على الأقل.';return}
+  if(typeof MediaRecorder==='undefined'||!cv.captureStream){$('msg').textContent='متصفحك لا يدعم التصدير. جرّب Chrome.';return}
+  const mt=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
+  ext=mt&&mt.startsWith('video/mp4')?'mp4':'webm';
+  $('msg').textContent='جارٍ التصدير... أبقِ الشاشة مفتوحة حتى ينتهي التشغيل.';
+  const stream=cv.captureStream(30);
+  if(hasMusic&&dst){try{ac.resume();dst.stream.getAudioTracks().forEach(tk=>stream.addTrack(tk))}catch(e){}}
+  chunks=[];rec=new MediaRecorder(stream,mt?{mimeType:mt,videoBitsPerSecond:4e6}:{});
+  rec.ondataavailable=e=>e.data.size&&chunks.push(e.data);
+  rec.onstop=()=>{
+    const b=new Blob(chunks,{type:ext==='mp4'?'video/mp4':'video/webm'}),u=URL.createObjectURL(b);
+    $('rv').src=u;$('dl').href=u;$('dl').download='video.'+ext;$('res').style.display='block';
+    $('msg').textContent='تم! الفيديو جاهز بالأسفل (صيغة '+ext.toUpperCase()+').';$('res').scrollIntoView({behavior:'smooth'});
+  };
+  rec.start();exporting=true;t=0;play();
+};
+$('rt').onchange=setRatio;
+['tr','td','fl','tp','tc','kb'].forEach(i=>$(i).onchange=()=>{sync();frame()});
+setRatio();sync();
+</script>
+</body>
+</html>
